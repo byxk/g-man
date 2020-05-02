@@ -15,7 +15,7 @@ COLLECTION=
 EXTRA_OPTIONS=''
 
 # Grab vars from command line
-while getopts ":M:S:u:s:r:m:o:h:g:c:a:d" opt; do
+while getopts ":M:S:u:s:r:m:o:hg:c:a:dl" opt; do
   case $opt in
     S)
       SESS_NAME="$OPTARG"
@@ -50,6 +50,9 @@ while getopts ":M:S:u:s:r:m:o:h:g:c:a:d" opt; do
     d)
       NODOWNLOAD=y
       ;;
+    l)
+      NOFASTDL=y
+      ;;
     h)
       cat <<DELIM
 
@@ -66,6 +69,8 @@ while getopts ":M:S:u:s:r:m:o:h:g:c:a:d" opt; do
         -S    Session name for tmux                        gmod
         -c    Steam Workshop Collection ID (requires -a)
         -a    API Key
+        -d    Skip steamcmd download/validation
+        -l    Skip fastdl setup
         -o    Set extra options
 
 DELIM
@@ -135,7 +140,10 @@ if [ "$ARCH" = "x86_64" ];
 then
   dpkg --add-architecture i386
   apt-get update
-  apt-get -y install lib32stdc++6 lib32ncurses5 lib32z1 mono-complete unzip lighttpd
+  apt-get -y install lib32stdc++6 lib32ncurses5 lib32z1 unzip lighttpd
+  if [ -z "$NOFASTDL" ]; then
+      apt-get -y install mono-complete
+  fi
 fi
 
 # Start with the Steam commands
@@ -194,7 +202,7 @@ fi
 mkdir -p $HOMEDIR/gmod/SourceRSC
 mkdir -p /var/www/html/fastdl
 unzip SourceRSC.zip -d $HOMEDIR/gmod/SourceRSC
-
+if [ -z "$NOFASTDL" ]; then
 cat <<EOF > $HOMEDIR/gmod/SourceRSC/sourcersc.ini
 [GameMod]
 GMOD
@@ -233,6 +241,7 @@ True
 Off
 
 EOF
+fi
 if ! grep -i dir-listing /etc/lighttpd/lighttpd.conf; then
     echo "dir-listing.activate = \"enable\"" >> /etc/lighttpd/lighttpd.conf
 fi
@@ -241,7 +250,7 @@ IP=$(ip addr show eth0 | grep "inet\b" | awk '{print $2}' | cut -d/ -f1 | head -
 
 su - -c "(cat <<DELIM
 sv_allowupload 1
-sv_allowdownload 1
+sv_allowdownload 0
 sv_downloadurl \"http://$IP/fastdl/\"
 DELIM
 ) > $HOMEDIR/gmod/garrysmod/cfg/server.cfg" $USER
@@ -260,10 +269,12 @@ resource.AddWorkshop('118656242') -- zs_cleanoffice
 DELIM
 ) > $HOMEDIR/gmod/garrysmod/lua/autorun/server/resource.lua" $USER
 
+if [ -z "$NOFASTDL" ]; then
 # Spin up the tmux session for fastdl
 tmux new-session -A -d -s fastdl
 tmux send-keys -t "fastdl:$WINDOW_NAME.$PANE_NAME" C-z \
   "cd $HOMEDIR/gmod/SourceRSC/ && sudo mono SourceRSC.exe" Enter
+fi
 
 # Spin up the tmux session for gmod
 tmux new-session -A -d -s $SESS_NAME

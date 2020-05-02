@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 # Var defaults
 SESS_NAME=gmod
@@ -15,7 +15,7 @@ COLLECTION=
 EXTRA_OPTIONS=''
 
 # Grab vars from command line
-while getopts ":M:S:u:s:r:m:o:h:g:c:a:" opt; do
+while getopts ":M:S:u:s:r:m:o:h:g:c:a:d" opt; do
   case $opt in
     S)
       SESS_NAME="$OPTARG"
@@ -46,6 +46,9 @@ while getopts ":M:S:u:s:r:m:o:h:g:c:a:" opt; do
       ;;
     a)
       API_KEY="$OPTARG"
+      ;;
+    d)
+      NODOWNLOAD=y
       ;;
     h)
       cat <<DELIM
@@ -124,7 +127,6 @@ cat <<DELIM
   You have 5 seconds to hit Ctrl-C if the above options don't look right!
 DELIM
 
-sleep 5
 
 # Here we go! Update, and add the i386 architecture libraries in.
 apt-get update
@@ -133,30 +135,24 @@ if [ "$ARCH" = "x86_64" ];
 then
   dpkg --add-architecture i386
   apt-get update
-  apt-get -y install ia32-libs
+  apt-get -y install lib32stdc++6 lib32ncurses5 lib32z1 mono-complete
 fi
 
-# Install tmux. Assume the version on the server is not new enough.
-apt-get -y install vim libevent-dev libncurses5-dev build-essential
-wget http://downloads.sourceforge.net/tmux/tmux-1.8.tar.gz
-tar xfz tmux-1.8.tar.gz
-cd tmux-1.8
-./configure
-make install clean
-
 # Start with the Steam commands
-chmod +x steamcmd.sh
 mkdir -p "$HOMEDIR"
-useradd $USER
+useradd $USER || true
 wget http://media.steampowered.com/client/steamcmd_linux.tar.gz -O $HOMEDIR/steamcmd_linux.tar.gz
 tar xfz $HOMEDIR/steamcmd_linux.tar.gz -C $HOMEDIR
 chown -R $USER:$USER $HOMEDIR
 chmod 700 $HOMEDIR
+chmod +x "$HOMEDIR"/steamcmd.sh
 
 # Execute Steam commands to build the server
+if [ -z "$NODOWNLOAD" ]; then
 su - -c "$HOMEDIR/steamcmd.sh +login anonymous +force_install_dir $HOMEDIR/gmod +app_update 4020 validate +quit" $USER
 su - -c "$HOMEDIR/steamcmd.sh +login anonymous +force_install_dir $HOMEDIR/content/tf2 +app_update 232250 validate +quit" $USER
 su - -c "$HOMEDIR/steamcmd.sh +login anonymous +force_install_dir $HOMEDIR/content/css +app_update 232330 validate +quit" $USER
+fi
 
 # Build the mount.cfg file
 su - -c "(cat <<DELIM
@@ -183,7 +179,7 @@ then
   OPTSTRING="$OPTSTRING +rcon_password $RCON_PASSWORD"
 fi
 
-if [ -n "$COLLECTION" && -n "$API_KEY" ];
+if [ -n "$COLLECTION" ] && [ -n "$API_KEY" ];
 then
   OPTSTRING="$OPTSTRING +host_workshop_collection $COLLECTION -authkey $API_KEY"
 fi

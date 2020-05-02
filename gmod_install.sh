@@ -135,7 +135,7 @@ if [ "$ARCH" = "x86_64" ];
 then
   dpkg --add-architecture i386
   apt-get update
-  apt-get -y install lib32stdc++6 lib32ncurses5 lib32z1 mono-complete
+  apt-get -y install lib32stdc++6 lib32ncurses5 lib32z1 mono-complete unzip lighttpd
 fi
 
 # Start with the Steam commands
@@ -167,7 +167,7 @@ DELIM
 ) > $HOMEDIR/gmod/garrysmod/cfg/mount.cfg" $USER
 
 # Build the options string
-OPTSTRING=" -game garrysmod +maxplayers $MAX_PLAYERS +map $MAP +gamemode $GAMEMODE"
+OPTSTRING=" -game garrysmod +maxplayers $MAX_PLAYERS +map $MAP +gamemode $GAMEMODE +exec server.cfg" 
 
 if [ -n "$SV_PASSWORD" ];
 then
@@ -189,8 +189,83 @@ then
   OPTSTRING="$OPTSTRING $EXTRA_OPTIONS"
 fi
 
+# fastdl
+# $HOMEDIR/gmod/garrysmod/cfg/mount.cfg
+mkdir -p $HOMEDIR/gmod/SourceRSC
+mkdir -p /var/www/html/fastdl
+unzip SourceRSC.zip -d $HOMEDIR/gmod/SourceRSC
 
-# Spin up the tmux session
+cat <<EOF > $HOMEDIR/gmod/SourceRSC/sourcersc.ini
+[GameMod]
+GMOD
+
+[GSQryMode]
+local
+
+[RedirQryMode]
+local
+
+[ServerPath]
+/home/srcds/gmod/garrysmod/
+
+[RedirectPath]
+/var/www/html/fastdl
+
+[CompressPath]
+/tmp/bzd
+
+[RmCPath]
+False
+
+[SkipAddons]
+False
+
+[SkipMisc]
+True
+
+[Debug]
+False
+
+[AutoUpdate]
+True
+
+[RedirectCleaner]
+Off
+
+EOF
+if ! grep -i dir-listing /etc/lighttpd/lighttpd.conf; then
+    echo "dir-listing.activate = \"enable\"" >> /etc/lighttpd/lighttpd.conf
+fi
+systemctl restart lighttpd
+IP=$(ip addr show eth0 | grep "inet\b" | awk '{print $2}' | cut -d/ -f1 | head -n1)
+
+su - -c "(cat <<DELIM
+sv_allowupload 1
+sv_allowdownload 1
+sv_downloadurl \"http://$IP/fastdl/\"
+DELIM
+) > $HOMEDIR/gmod/garrysmod/cfg/server.cfg" $USER
+
+su - -c "(cat <<DELIM
+-- Collection: Zombie Survival Gamemode + Maps (157384458)
+resource.AddWorkshop('105462463') -- Zombie Survival
+resource.AddWorkshop('110984714') -- Zs Nacht Der Untoten
+resource.AddWorkshop('110985664') -- Zs Obj Vertigo
+resource.AddWorkshop('110983920') -- Zs Vault 106
+resource.AddWorkshop('104848844') -- zs_yc2transit
+resource.AddWorkshop('112595416') -- zs_obj_dump_v14
+resource.AddWorkshop('107254185') -- zs_hazard_v3
+resource.AddWorkshop('117020215') -- zs_factory_v3
+resource.AddWorkshop('118656242') -- zs_cleanoffice
+DELIM
+) > $HOMEDIR/gmod/garrysmod/lua/autorun/server/resource.lua" $USER
+
+# Spin up the tmux session for fastdl
+tmux new-session -A -d -s fastdl
+tmux send-keys -t "fastdl:$WINDOW_NAME.$PANE_NAME" C-z \
+  "cd $HOMEDIR/gmod/SourceRSC/ && sudo mono SourceRSC.exe" Enter
+
+# Spin up the tmux session for gmod
 tmux new-session -A -d -s $SESS_NAME
 
 tmux send-keys -t "$SESS_NAME:$WINDOW_NAME.$PANE_NAME" C-z \

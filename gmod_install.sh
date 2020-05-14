@@ -15,7 +15,7 @@ COLLECTION=
 EXTRA_OPTIONS=''
 
 # Grab vars from command line
-while getopts ":M:S:u:s:r:m:o:hg:c:a:dl" opt; do
+while getopts ":M:S:u:s:r:m:o:hg:c:a:dlH:" opt; do
   case $opt in
     S)
       SESS_NAME="$OPTARG"
@@ -53,6 +53,9 @@ while getopts ":M:S:u:s:r:m:o:hg:c:a:dl" opt; do
     l)
       NOFASTDL=y
       ;;
+    H)
+      HOSTNAME="$OPTARG"
+      ;;
     h)
       cat <<DELIM
 
@@ -71,6 +74,7 @@ while getopts ":M:S:u:s:r:m:o:hg:c:a:dl" opt; do
         -a    API Key
         -d    Skip steamcmd download/validation
         -l    Skip fastdl setup
+        -H    Set server name
         -o    Set extra options
 
 DELIM
@@ -201,8 +205,8 @@ fi
 # $HOMEDIR/gmod/garrysmod/cfg/mount.cfg
 mkdir -p $HOMEDIR/gmod/SourceRSC
 mkdir -p /var/www/html/fastdl
-unzip SourceRSC.zip -d $HOMEDIR/gmod/SourceRSC
 if [ -z "$NOFASTDL" ]; then
+unzip SourceRSC.zip -d $HOMEDIR/gmod/SourceRSC
 cat <<EOF > $HOMEDIR/gmod/SourceRSC/sourcersc.ini
 [GameMod]
 GMOD
@@ -249,6 +253,7 @@ systemctl restart lighttpd
 IP=$(ip addr show eth0 | grep "inet\b" | awk '{print $2}' | cut -d/ -f1 | head -n1)
 
 su - -c "(cat <<DELIM
+hostname $HOSTNAME
 sv_allowupload 1
 sv_allowdownload 0
 sv_downloadurl \"http://$IP/fastdl/\"
@@ -256,16 +261,52 @@ DELIM
 ) > $HOMEDIR/gmod/garrysmod/cfg/server.cfg" $USER
 
 su - -c "(cat <<DELIM
--- Collection: Zombie Survival Gamemode + Maps (157384458)
-resource.AddWorkshop('105462463') -- Zombie Survival
-resource.AddWorkshop('110984714') -- Zs Nacht Der Untoten
-resource.AddWorkshop('110985664') -- Zs Obj Vertigo
-resource.AddWorkshop('110983920') -- Zs Vault 106
-resource.AddWorkshop('104848844') -- zs_yc2transit
-resource.AddWorkshop('112595416') -- zs_obj_dump_v14
-resource.AddWorkshop('107254185') -- zs_hazard_v3
-resource.AddWorkshop('117020215') -- zs_factory_v3
-resource.AddWorkshop('118656242') -- zs_cleanoffice
+resource.AddWorkshop("1215502383") -- Custom Roles for TTT
+resource.AddWorkshop("281454209") -- ttt_Clue_se
+resource.AddWorkshop("295897079") -- ttt_lego
+resource.AddWorkshop("186012196") -- ttt_cruise
+resource.AddWorkshop("504945881") -- Enhanced PlayerModel Selector
+resource.AddWorkshop("1817725067") -- [T] Harpoon [TTT]
+resource.AddWorkshop("133911194") -- ttt_theship_v1
+resource.AddWorkshop("253328815") -- ttt_skyscraper
+resource.AddWorkshop("1826848676") -- ttt_community_bowling_v6a
+resource.AddWorkshop("147635981") -- ttt_forest_final
+resource.AddWorkshop("493066418") -- TTT flashbang
+resource.AddWorkshop("1461095720") -- RedMatter Bomb (T Weapon)
+resource.AddWorkshop("785294711") -- TTT Taser
+resource.AddWorkshop("143190159") -- Prop Hunt
+resource.AddWorkshop("590909626") -- TTT Handcuffs
+resource.AddWorkshop("254107561") -- TTT Weapon Turret
+resource.AddWorkshop("1689087439") -- ttt_mcmansion
+resource.AddWorkshop("639521512") -- [TTT] Boomerang
+resource.AddWorkshop("2054763555") -- ttt_Devoz
+resource.AddWorkshop("1909619554") -- Golden Deagle for Custom Roles for TTT
+resource.AddWorkshop("1475589106") -- ttt_bikinibottom
+resource.AddWorkshop("1287755005") -- Breath of the Wild - Link [PM, Ragdoll]
+resource.AddWorkshop("401568227") -- Crash Twinsanity Player Model
+resource.AddWorkshop("348923474") -- Halo: CE Spartan Player Models
+resource.AddWorkshop("1319799465") -- Left Shark Accurate Hitbox Playermodel
+resource.AddWorkshop("897977074") -- Iron Giant
+resource.AddWorkshop("742848707") -- OW || D.Va [PM/RAG/NPC/VOX]
+resource.AddWorkshop("562524462") -- OW: Tracer P.M. and Ragdoll
+resource.AddWorkshop("944799349") -- Spider-Gwen [PM/NPC/Ragdoll]
+resource.AddWorkshop("452065494") -- STAR WARS Darth Vader Playermodel
+resource.AddWorkshop("1410172299") -- Strike Freedom Gundam
+resource.AddWorkshop("975395650") -- The Witcher 3: Geralt of Rivia Pack [PM/NPC]
+resource.AddWorkshop("725320580") -- [The Ship] Donald Trump [Ragdoll/PM]
+resource.AddWorkshop("1356525918") -- Kurisu Playermodel/NPC [REUPLOAD]
+resource.AddWorkshop("1586172226") -- [P5] Joker P.M.
+resource.AddWorkshop("950972267") -- Persona 5 || Futaba [PM]
+resource.AddWorkshop("306283778") -- Solaire of Astora Playermodel & NPC
+resource.AddWorkshop("188818807") -- Office (ph_office)
+resource.AddWorkshop("1083829149") -- Ph_Aperture
+resource.AddWorkshop("667484197") -- ph_bank
+resource.AddWorkshop("367415423") -- ph_Chalet
+resource.AddWorkshop("377716750") -- ph_clue_v2
+resource.AddWorkshop("854634173") -- Appearence Miku (Stroll) P.M. & NPC
+resource.AddWorkshop("914604640") -- Shimakaze (Kancolle) P.M. & NPC
+resource.AddWorkshop("1136706218") -- Yuudachi Kai Ni (Kancolle) Playermodel and NPC
+resource.AddWorkshop("870523620") -- Kizuna AI P.M. & NPC
 DELIM
 ) > $HOMEDIR/gmod/garrysmod/lua/autorun/server/resource.lua" $USER
 

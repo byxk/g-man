@@ -307,6 +307,13 @@ resource.AddWorkshop("854634173") -- Appearence Miku (Stroll) P.M. & NPC
 resource.AddWorkshop("914604640") -- Shimakaze (Kancolle) P.M. & NPC
 resource.AddWorkshop("1136706218") -- Yuudachi Kai Ni (Kancolle) Playermodel and NPC
 resource.AddWorkshop("870523620") -- Kizuna AI P.M. & NPC
+resource.AddWorkshop("501440567") -- The Witcher 3: Wild Hunt - Ciri (NPC & Playermodel) *faceposing will be added*
+resource.AddWorkshop("2084637849") -- TTT_BrooklynNineNine_0
+resource.AddWorkshop("635911320") -- [TTT] Star Wars - The Force
+resource.AddWorkshop("2042473117") -- [TTT] ttt_city_center
+resource.AddWorkshop("1105014193") -- ttt_aircraft
+resource.AddWorkshop("534491717") -- ttt_rooftops_2016
+resource.AddWorkshop("260153473") -- ttt_mc_mineshaft
 DELIM
 ) > $HOMEDIR/gmod/garrysmod/lua/autorun/server/resource.lua" $USER
 
